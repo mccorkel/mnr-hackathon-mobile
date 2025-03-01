@@ -2,13 +2,11 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -22,7 +20,7 @@ export default function TabLayout() {
           tabBarStyle: {
             backgroundColor: colorScheme === 'dark' ? '#121212' : '#fff',
           },
-          headerShown: false,
+          headerShown: true,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
           tabBarStyle: Platform.select({
@@ -36,18 +34,40 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: 'Dashboard',
+            headerTitle: 'Dashboard',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
         <Tabs.Screen
-          name="explore"
+          name="ask-ai"
           options={{
-            title: 'Explore',
+            title: 'Ask AI',
+            headerTitle: 'Ask AI',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="compass-outline" size={size} color={color} />
+              <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="records"
+          options={{
+            title: 'Records',
+            headerTitle: 'Records',
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="sharing"
+          options={{
+            title: 'Sharing',
+            headerTitle: 'Sharing',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="share-outline" size={size} color={color} />
             ),
           }}
         />
@@ -55,6 +75,7 @@ export default function TabLayout() {
           name="settings"
           options={{
             title: 'Settings',
+            headerTitle: 'Settings',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="settings-outline" size={size} color={color} />
             ),
