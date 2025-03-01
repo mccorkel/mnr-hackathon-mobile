@@ -4,6 +4,18 @@ import { TextInput, Button, Text, Appbar, ActivityIndicator } from 'react-native
 import { useFasten } from '../_layout';
 import { StatusBar } from 'expo-status-bar';
 import FastenLogo from '@/components/FastenLogo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Key for storing username in AsyncStorage - must match the one in _layout.tsx
+const USERNAME_STORAGE_KEY = 'fasten_username';
+
+// Define a type for the API response data
+interface ApiResponse {
+  data?: string;
+  message?: string;
+  token?: string;
+  access_token?: string;
+}
 
 export default function LoginScreen() {
   const { fastenDomain, setAuthToken } = useFasten();
@@ -42,7 +54,7 @@ export default function LoginScreen() {
           'Accept-Language': 'en-US,en;q=0.5',
           'Content-Type': 'application/json',
           'Connection': 'keep-alive',
-          'Origin': fastenDomain,
+          'Origin': fastenDomain || '',  // Fix: Ensure Origin is never null
           'Referer': `${fastenDomain}/web/auth/signin`,
           'Sec-Fetch-Dest': 'empty',
           'Sec-Fetch-Mode': 'cors',
@@ -65,11 +77,12 @@ export default function LoginScreen() {
       setDebugInfo(prev => `${prev}\nResponse text: ${responseText.substring(0, 200)}...`);
       
       // Try to parse as JSON
-      let data;
+      let data: ApiResponse;
       try {
-        data = JSON.parse(responseText);
+        data = JSON.parse(responseText) as ApiResponse;
         setDebugInfo(prev => `${prev}\nParsed JSON data: ${JSON.stringify(data).substring(0, 200)}...`);
-      } catch (parseError) {
+      } catch (error) {
+        const parseError = error as Error;
         setDebugInfo(prev => `${prev}\nJSON parse error: ${parseError.message}`);
         throw new Error(`Failed to parse response as JSON: ${parseError.message}`);
       }
@@ -78,6 +91,17 @@ export default function LoginScreen() {
         // Store the auth token
         if (data.data) {
           setAuthToken(data.data);
+          
+          // Save the username to AsyncStorage
+          try {
+            await AsyncStorage.setItem(USERNAME_STORAGE_KEY, username);
+            setDebugInfo(prev => `${prev}\nUsername saved to storage`);
+          } catch (error) {
+            const storageError = error as Error;
+            console.error('Failed to save username to storage', storageError);
+            setDebugInfo(prev => `${prev}\nFailed to save username: ${storageError.message}`);
+          }
+          
           setDebugInfo(prev => `${prev}\nLogin successful!`);
         } else {
           setError('Invalid response format. Token not found in response.');
@@ -89,9 +113,10 @@ export default function LoginScreen() {
         setDebugInfo(prev => `${prev}\nLogin failed with message: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error during login:', error);
-      setError(`Network error: ${error.message}`);
-      setDebugInfo(prev => `${prev}\nException: ${error.message}`);
+      const networkError = error as Error;
+      console.error('Error during login:', networkError);
+      setError(`Network error: ${networkError.message}`);
+      setDebugInfo(prev => `${prev}\nException: ${networkError.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +141,7 @@ export default function LoginScreen() {
           'Accept-Language': 'en-US,en;q=0.5',
           'Content-Type': 'application/json',
           'Connection': 'keep-alive',
-          'Origin': fastenDomain,
+          'Origin': fastenDomain || '',  // Fix: Ensure Origin is never null
           'Referer': `${fastenDomain}/web/auth/signin`,
           'Sec-Fetch-Dest': 'empty',
           'Sec-Fetch-Mode': 'cors',
@@ -135,11 +160,12 @@ export default function LoginScreen() {
       setDebugInfo(prev => `${prev}\nResponse text: ${responseText.substring(0, 200)}...`);
       
       // Try to parse as JSON
-      let data;
+      let data: ApiResponse;
       try {
-        data = JSON.parse(responseText);
+        data = JSON.parse(responseText) as ApiResponse;
         setDebugInfo(prev => `${prev}\nParsed JSON data: ${JSON.stringify(data).substring(0, 200)}...`);
-      } catch (parseError) {
+      } catch (error) {
+        const parseError = error as Error;
         setDebugInfo(prev => `${prev}\nJSON parse error: ${parseError.message}`);
         throw new Error(`Failed to parse response as JSON: ${parseError.message}`);
       }
@@ -160,9 +186,10 @@ export default function LoginScreen() {
         setDebugInfo(prev => `${prev}\nLogin failed with message: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error during alternative login:', error);
-      setError(`Network error: ${error.message}`);
-      setDebugInfo(prev => `${prev}\nException: ${error.message}`);
+      const networkError = error as Error;
+      console.error('Error during alternative login:', networkError);
+      setError(`Network error: ${networkError.message}`);
+      setDebugInfo(prev => `${prev}\nException: ${networkError.message}`);
     } finally {
       setIsSubmitting(false);
     }

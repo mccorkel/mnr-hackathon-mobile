@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Provider as PaperProvider, MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -108,6 +109,7 @@ function AuthenticatedLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth/domain" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="auth/login" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
@@ -199,6 +201,9 @@ export default function RootLayout() {
     return null; // Still loading
   }
 
+  // Create Paper themes based on color scheme
+  const paperTheme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
+
   // Create a context provider to share the domain and auth state
   return (
     <FastenContext.Provider value={{ 
@@ -208,10 +213,12 @@ export default function RootLayout() {
       setAuthToken,
       signOut
     }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthenticatedLayout />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <PaperProvider theme={paperTheme}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AuthenticatedLayout />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </PaperProvider>
     </FastenContext.Provider>
   );
 }
