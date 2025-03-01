@@ -57,6 +57,7 @@ type FastenContextType = {
   authToken: string | null;
   setAuthToken: (token: string | null) => void;
   signOut: () => Promise<void>;
+  refreshToken: () => Promise<boolean>;
 };
 
 export const FastenContext = createContext<FastenContextType>({
@@ -65,6 +66,7 @@ export const FastenContext = createContext<FastenContextType>({
   authToken: null,
   setAuthToken: () => {},
   signOut: async () => {},
+  refreshToken: async () => false,
 });
 
 // Custom hook to use the Fasten context
@@ -191,6 +193,39 @@ export default function RootLayout() {
     setAuthToken(null);
   };
 
+  // Token refresh function
+  const refreshToken = async (): Promise<boolean> => {
+    if (!fastenDomain) return false;
+    
+    try {
+      console.log('Attempting to refresh token...');
+      
+      // Make a request to the refresh token endpoint
+      const response = await fetch(`${fastenDomain}/api/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          console.log('Token refreshed successfully');
+          setAuthToken(data.token);
+          return true;
+        }
+      }
+      
+      console.error('Failed to refresh token:', response.status);
+      return false;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
@@ -206,17 +241,19 @@ export default function RootLayout() {
 
   // Create a context provider to share the domain and auth state
   return (
-    <FastenContext.Provider value={{ 
-      fastenDomain, 
-      setFastenDomain: (domain: string) => setFastenDomain(domain),
-      authToken,
-      setAuthToken,
-      signOut
-    }}>
+    <FastenContext.Provider
+      value={{
+        fastenDomain,
+        setFastenDomain: (domain) => setFastenDomain(domain),
+        authToken,
+        setAuthToken,
+        signOut,
+        refreshToken
+      }}>
       <PaperProvider theme={paperTheme}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AuthenticatedLayout />
-          <StatusBar style="auto" />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          {isLoading ? null : <AuthenticatedLayout />}
         </ThemeProvider>
       </PaperProvider>
     </FastenContext.Provider>

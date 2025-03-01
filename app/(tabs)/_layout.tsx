@@ -146,10 +146,10 @@ export default function TabLayout() {
         <Tabs.Screen
           name="sharing"
           options={{
-            title: 'Sharing',
+            title: 'EMR Data',
             headerTitle: '',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="share-outline" size={size} color={color} />
+              <Ionicons name="medical-outline" size={size} color={color} />
             ),
           }}
         />

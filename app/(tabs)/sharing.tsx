@@ -13,7 +13,7 @@ export default function SharingScreen() {
         <View style={styles.content}>
           <Card style={styles.infoCard}>
             <Card.Content>
-              <Text variant="titleMedium">Data Sharing</Text>
+              <Text variant="titleMedium">EMR Data Sharing</Text>
               <Text variant="bodySmall" style={styles.infoText}>
                 Control how your health data is shared with healthcare providers and research organizations.
               </Text>
