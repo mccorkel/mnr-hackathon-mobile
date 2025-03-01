@@ -16,6 +16,7 @@ SplashScreen.preventAutoHideAsync();
 // Keys for storing values in AsyncStorage
 const FASTEN_DOMAIN_KEY = 'fasten_domain_url';
 const AUTH_TOKEN_KEY = 'fasten_auth_token';
+const LLM_DOMAIN_KEY = 'llm_domain_url';
 
 // Create a memory fallback for AsyncStorage in case it's not available
 let memoryStorage: { [key: string]: string } = {};
@@ -58,6 +59,8 @@ type FastenContextType = {
   setAuthToken: (token: string | null) => void;
   signOut: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
+  llmDomain: string | null;
+  setLlmDomain: (domain: string) => void;
 };
 
 export const FastenContext = createContext<FastenContextType>({
@@ -67,6 +70,8 @@ export const FastenContext = createContext<FastenContextType>({
   setAuthToken: () => {},
   signOut: async () => {},
   refreshToken: async () => false,
+  llmDomain: null,
+  setLlmDomain: () => {},
 });
 
 // Custom hook to use the Fasten context
@@ -124,19 +129,22 @@ export default function RootLayout() {
   });
   const [fastenDomain, setFastenDomain] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [llmDomain, setLlmDomain] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load the domain and auth token from storage when the app starts
   useEffect(() => {
     async function loadData() {
       try {
-        const [domain, token] = await Promise.all([
+        const [domain, token, llmDomainValue] = await Promise.all([
           safeStorage.getItem(FASTEN_DOMAIN_KEY),
-          safeStorage.getItem(AUTH_TOKEN_KEY)
+          safeStorage.getItem(AUTH_TOKEN_KEY),
+          safeStorage.getItem(LLM_DOMAIN_KEY)
         ]);
         
         setFastenDomain(domain);
         setAuthToken(token);
+        setLlmDomain(llmDomainValue);
       } catch (error) {
         console.error('Failed to load data from storage', error);
       } finally {
@@ -188,6 +196,23 @@ export default function RootLayout() {
     }
   }, [authToken, isLoading]);
 
+  // Save the LLM domain to storage when it changes
+  useEffect(() => {
+    async function saveLlmDomain() {
+      if (llmDomain !== null) {
+        try {
+          await safeStorage.setItem(LLM_DOMAIN_KEY, llmDomain);
+        } catch (error) {
+          console.error('Failed to save LLM domain to storage', error);
+        }
+      }
+    }
+    
+    if (!isLoading) {
+      saveLlmDomain();
+    }
+  }, [llmDomain, isLoading]);
+
   // Sign out function
   const signOut = async () => {
     setAuthToken(null);
@@ -236,8 +261,26 @@ export default function RootLayout() {
     return null; // Still loading
   }
 
-  // Create Paper themes based on color scheme
-  const paperTheme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
+  // Create Paper themes based on color scheme with custom colors
+  const lightTheme = {
+    ...MD3LightTheme,
+    colors: {
+      ...MD3LightTheme.colors,
+      primary: '#0a7ea4',      // Teal blue (existing tint color)
+      secondary: '#00BFA5',    // Complementary teal
+    },
+  };
+
+  const darkTheme = {
+    ...MD3DarkTheme,
+    colors: {
+      ...MD3DarkTheme.colors,
+      primary: '#4fb3d9',      // Lighter teal blue for dark mode
+      secondary: '#1DE9B6',    // Brighter teal for dark mode
+    },
+  };
+
+  const paperTheme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
   // Create a context provider to share the domain and auth state
   return (
@@ -248,7 +291,9 @@ export default function RootLayout() {
         authToken,
         setAuthToken,
         signOut,
-        refreshToken
+        refreshToken,
+        llmDomain,
+        setLlmDomain: (domain) => setLlmDomain(domain),
       }}>
       <PaperProvider theme={paperTheme}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

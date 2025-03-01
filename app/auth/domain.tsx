@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert, SafeAreaView, 
 import { TextInput, Button, Text, Appbar } from 'react-native-paper';
 import { useFasten } from '../_layout';
 import { StatusBar } from 'expo-status-bar';
-import FastenLogo from '@/components/FastenLogo';
+import VitalSightLogo from '@/components/VitalSightLogo';
 import { useRouter } from 'expo-router';
 
 export default function DomainScreen() {
@@ -111,21 +111,21 @@ export default function DomainScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           
           <View style={styles.logoContainer}>
-            <FastenLogo />
+            <VitalSightLogo />
           </View>
           
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Welcome to Fasten</Text>
-            <Text style={styles.subtitle}>Enter your organization's Fasten domain to continue</Text>
+            <Text style={styles.title}>Welcome to VitalSight</Text>
+            <Text style={styles.subtitle}>Enter your organization's VitalSight domain to continue</Text>
             
             <TextInput
-              label="Fasten Domain URL"
+              label="VitalSight Domain URL"
               value={domain}
               onChangeText={text => {
                 setDomain(text);
                 setError('');
               }}
-              placeholder="yourdomain.fasten.com"
+              placeholder="yourdomain.vitalsight.com"
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   },
   altButton: {
     marginTop: 8,
-    borderColor: '#6200ee',
+    borderColor: '#0a7ea4',
   },
   buttonText: {
     fontSize: 16,

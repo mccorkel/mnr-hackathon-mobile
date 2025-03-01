@@ -60,7 +60,7 @@ const RELATIONSHIPS = [
 ];
 
 export default function SettingsScreen() {
-  const { fastenDomain, setFastenDomain, signOut, authToken } = useFasten();
+  const { fastenDomain, setFastenDomain, signOut, authToken, llmDomain, setLlmDomain } = useFasten();
   const router = useRouter();
   
   // State for family members
@@ -129,6 +129,15 @@ export default function SettingsScreen() {
   
   // Add a new state variable for tracking single patient edit mode
   const [editingSinglePatient, setEditingSinglePatient] = useState(false);
+  
+  // Domain management state
+  const [isResetting, setIsResetting] = useState(false);
+  const [newDomain, setNewDomain] = useState('');
+  const [newLlmDomain, setNewLlmDomain] = useState('');
+  const [showDomainInput, setShowDomainInput] = useState(false);
+  const [showLlmDomainInput, setShowLlmDomainInput] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
   
   // Load username and relationship mapping status when component mounts
   useEffect(() => {
@@ -966,22 +975,34 @@ export default function SettingsScreen() {
   const handleResetDomain = () => {
     Alert.alert(
       'Reset Domain',
-      'Are you sure you want to reset your Fasten domain? You will need to enter it again.',
+      'Are you sure you want to reset your domain? This will sign you out and clear all settings.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            setIsResetting(true);
             try {
-              setFastenDomain('');
+              // Clear both domains and sign out
+              await setFastenDomain('');
+              await setLlmDomain('');
+              await signOut();
+              router.replace('/auth/domain');
             } catch (error) {
               console.error('Error resetting domain:', error);
-              Alert.alert('Error', 'Failed to reset domain. Please try again.');
+              setError('Failed to reset domain. Please try again.');
+              setShowErrorDialog(true);
+            } finally {
+              setIsResetting(false);
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
+      { cancelable: true }
     );
   };
 
@@ -1155,6 +1176,87 @@ export default function SettingsScreen() {
     }
   };
 
+  // Load saved settings when component mounts
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const [privacySetting, notificationSetting] = await Promise.all([
+          AsyncStorage.getItem('privacyMode'),
+          AsyncStorage.getItem('notificationsEnabled')
+        ]);
+        
+        if (privacySetting !== null) {
+          setPrivacyMode(privacySetting === 'true');
+        }
+        
+        if (notificationSetting !== null) {
+          setNotificationsEnabled(notificationSetting === 'true');
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        setError('Failed to load settings. Please try again.');
+      }
+    };
+    
+    loadSettings();
+  }, []);
+
+  // Save settings when they change
+  useEffect(() => {
+    const saveSettings = async () => {
+      try {
+        await AsyncStorage.setItem('privacyMode', privacyMode.toString());
+        await AsyncStorage.setItem('notificationsEnabled', notificationsEnabled.toString());
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        setError('Failed to save settings. Please try again.');
+      }
+    };
+    
+    saveSettings();
+  }, [privacyMode, notificationsEnabled]);
+
+  // Domain management functions
+  const handleUpdateDomain = async () => {
+    if (!newDomain.trim()) {
+      setError('Please enter a valid domain');
+      setShowErrorDialog(true);
+      return;
+    }
+
+    try {
+      const formattedDomain = newDomain.startsWith('http') ? newDomain : `https://${newDomain}`;
+      await setFastenDomain(formattedDomain);
+      setShowDomainInput(false);
+      setNewDomain('');
+      Alert.alert('Success', 'Domain updated successfully');
+    } catch (error) {
+      console.error('Error updating domain:', error);
+      setError('Failed to update domain. Please try again.');
+      setShowErrorDialog(true);
+    }
+  };
+
+  const handleUpdateLlmDomain = async () => {
+    if (!newLlmDomain.trim()) {
+      setError('Please enter a valid LLM domain');
+      setShowErrorDialog(true);
+      return;
+    }
+
+    try {
+      const formattedDomain = newLlmDomain.startsWith('http') ? newLlmDomain : `https://${newLlmDomain}`;
+      await setLlmDomain(formattedDomain);
+      setShowLlmDomainInput(false);
+      setNewLlmDomain('');
+      Alert.alert('Success', 'LLM Domain updated successfully');
+    } catch (error) {
+      console.error('Error updating LLM domain:', error);
+      setError('Failed to update LLM domain. Please try again.');
+      setShowErrorDialog(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Appbar.Header>
@@ -1230,6 +1332,7 @@ export default function SettingsScreen() {
           </Card.Content>
         </Card>
         
+        {/* Family Sharing Card */}
         <Card style={styles.card}>
           <Card.Title title="Family Sharing" />
           <Card.Content>
@@ -1262,12 +1365,13 @@ export default function SettingsScreen() {
           </Card.Content>
         </Card>
         
+        {/* Privacy & Notifications Card */}
         <Card style={styles.card}>
-          <Card.Title title="Sharing Settings" />
+          <Card.Title title="Privacy & Notifications" />
           <Card.Content>
             <List.Item
               title="Privacy Mode"
-              description="Temporarily pause all sharing"
+              description="Temporarily pause all data sharing"
               left={props => <List.Icon {...props} icon="shield" />}
               right={props => (
                 <Switch
@@ -1276,10 +1380,10 @@ export default function SettingsScreen() {
                 />
               )}
             />
-            <Divider />
+            <Divider style={styles.divider} />
             <List.Item
               title="Notifications"
-              description="Get notified when someone shares with you"
+              description="Get notified about important updates"
               left={props => <List.Icon {...props} icon="bell" />}
               right={props => (
                 <Switch
@@ -1288,51 +1392,177 @@ export default function SettingsScreen() {
                 />
               )}
             />
-            <Divider />
-            <List.Subheader>What You Share</List.Subheader>
-            {sharingCategories.map(category => (
-              <React.Fragment key={category.id}>
-                <List.Item
-                  title={category.name}
-                  description={category.description}
-                  left={props => <List.Icon {...props} icon={category.icon} />}
-                  right={props => (
-                    <Switch
-                      value={category.isShared}
-                      onValueChange={() => handleToggleGlobalSharing(category.id)}
-                    />
-                  )}
+          </Card.Content>
+        </Card>
+
+        {/* Domain Settings Card */}
+        <Card style={styles.card}>
+          <Card.Title title="Domain Settings" />
+          <Card.Content>
+            <List.Item
+              title="Current Domain"
+              description={fastenDomain || 'Not set'}
+              descriptionNumberOfLines={3}
+              descriptionStyle={styles.domainText}
+              right={props => (
+                <Button
+                  mode="text"
+                  onPress={() => {
+                    setShowDomainInput(!showDomainInput);
+                    setNewDomain('');
+                  }}
+                >
+                  {showDomainInput ? 'Cancel' : 'Change'}
+                </Button>
+              )}
+            />
+
+            {showDomainInput && (
+              <View style={styles.inputContainer}>
+                <TextInput
+                  label="New Domain"
+                  value={newDomain}
+                  onChangeText={setNewDomain}
+                  mode="outlined"
+                  style={styles.input}
+                  placeholder="https://your-domain.com"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
-                <Divider />
-              </React.Fragment>
-            ))}
+                <Button
+                  mode="contained"
+                  onPress={handleUpdateDomain}
+                  style={styles.updateButton}
+                >
+                  Update
+                </Button>
+              </View>
+            )}
+
+            <Divider style={styles.divider} />
+
+            <List.Item
+              title="LLM Domain"
+              description={llmDomain || 'Not set'}
+              descriptionNumberOfLines={3}
+              descriptionStyle={styles.domainText}
+              right={props => (
+                <Button
+                  mode="text"
+                  onPress={() => {
+                    setShowLlmDomainInput(!showLlmDomainInput);
+                    setNewLlmDomain('');
+                  }}
+                >
+                  {showLlmDomainInput ? 'Cancel' : 'Change'}
+                </Button>
+              )}
+            />
+
+            {showLlmDomainInput && (
+              <View style={styles.inputContainer}>
+                <TextInput
+                  label="New LLM Domain"
+                  value={newLlmDomain}
+                  onChangeText={setNewLlmDomain}
+                  mode="outlined"
+                  style={styles.input}
+                  placeholder="https://your-llm-domain.com"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Button
+                  mode="contained"
+                  onPress={handleUpdateLlmDomain}
+                  style={styles.updateButton}
+                >
+                  Update
+                </Button>
+              </View>
+            )}
+
+            <Divider style={styles.divider} />
+
+            <Button
+              mode="outlined"
+              onPress={handleResetDomain}
+              loading={isResetting}
+              disabled={isResetting}
+              style={[styles.button, styles.resetButton]}
+              textColor="#f44336"
+              icon="delete"
+            >
+              Reset Domain
+            </Button>
           </Card.Content>
         </Card>
         
-        <List.Section>
-          <List.Subheader>Account</List.Subheader>
-          <List.Item 
-            title="Sign Out" 
-            left={props => <List.Icon {...props} icon="logout" color="#F44336" />}
-            onPress={handleSignOut}
-          />
-          <Divider />
-          
-          <List.Subheader>Domain Settings</List.Subheader>
-          <List.Item 
-            title="Current Domain" 
-            description={fastenDomain || 'Not set'} 
-            descriptionNumberOfLines={3}
-            descriptionStyle={styles.domainText}
-          />
-          <Divider />
-          <List.Item 
-            title="Reset Domain" 
-            left={props => <List.Icon {...props} icon="refresh" color="#2196F3" />}
-            onPress={handleResetDomain}
-          />
-        </List.Section>
+        {/* Account Card */}
+        <Card style={styles.card}>
+          <Card.Title title="Account" />
+          <Card.Content>
+            {authToken ? (
+              <Button
+                mode="outlined"
+                onPress={handleSignOut}
+                style={styles.button}
+                icon="logout"
+              >
+                Sign Out
+              </Button>
+            ) : (
+              <Button
+                mode="outlined"
+                onPress={() => router.push('/auth/login')}
+                style={styles.button}
+                icon="login"
+              >
+                Sign In
+              </Button>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* About Card */}
+        <Card style={styles.card}>
+          <Card.Title title="About" />
+          <Card.Content>
+            <Text variant="bodyLarge" style={styles.aboutTitle}>VitalSight App</Text>
+            <Text variant="bodyMedium" style={styles.aboutText}>
+              Connect and manage your health data from multiple sources in one secure place.
+            </Text>
+            <Divider style={styles.divider} />
+            <List.Item
+              title="Version"
+              description="1.0.0"
+              left={props => <List.Icon {...props} icon="information" />}
+            />
+            <List.Item
+              title="Build"
+              description={`${Platform.OS === 'ios' ? 'iOS' : 'Android'} ${Platform.Version}`}
+              left={props => <List.Icon {...props} icon="cellphone" />}
+            />
+            <List.Item
+              title="Support"
+              description="help@vitalsight.com"
+              left={props => <List.Icon {...props} icon="email" />}
+            />
+          </Card.Content>
+        </Card>
       </ScrollView>
+      
+      {/* Error Dialog */}
+      <Portal>
+        <Dialog visible={showErrorDialog} onDismiss={() => setShowErrorDialog(false)}>
+          <Dialog.Title>Error</Dialog.Title>
+          <Dialog.Content>
+            <Text>{error}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowErrorDialog(false)}>OK</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
       
       {/* Add Family Member Dialog */}
       <Portal>
@@ -1376,14 +1606,10 @@ export default function SettingsScreen() {
                   <Switch
                     value={selectedMember?.sharedCategories.includes(category.name) || false}
                     onValueChange={() => handleToggleSharing(category.id)}
-                    disabled={!category.isShared}
                   />
                 )}
               />
             ))}
-            <Text style={styles.sharingNote}>
-              Note: You can only share categories that are globally enabled in Sharing Settings
-            </Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => handleRemoveFamilyMember(selectedMember?.id || '')}>Remove</Button>
@@ -1600,5 +1826,32 @@ const styles = StyleSheet.create({
   },
   customRelationshipInput: {
     marginTop: 8,
+  },
+  button: {
+    marginTop: 8,
+  },
+  resetButton: {
+    borderColor: '#f44336',
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  inputContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  input: {
+    marginBottom: 8,
+  },
+  updateButton: {
+    alignSelf: 'flex-end',
+  },
+  aboutTitle: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  aboutText: {
+    marginBottom: 16,
+    lineHeight: 20,
   },
 }); 
