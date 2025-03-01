@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   },
   clearButtonLabel: {
     fontSize: 12,
-    color: '#007AFF',
+    color: '#0a7ea4',
   },
   chatContainer: {
     flex: 1,

@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert, SafeAreaView, 
 import { TextInput, Button, Text, Appbar, ActivityIndicator } from 'react-native-paper';
 import { useFasten } from '../_layout';
 import { StatusBar } from 'expo-status-bar';
-import FastenLogo from '@/components/FastenLogo';
+import VitalSightLogo from '@/components/VitalSightLogo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Key for storing username in AsyncStorage - must match the one in _layout.tsx
@@ -205,11 +205,11 @@ export default function LoginScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           
           <View style={styles.logoContainer}>
-            <FastenLogo />
+            <VitalSightLogo />
           </View>
           
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Sign In to Fasten</Text>
+            <Text style={styles.title}>Sign In to VitalSight</Text>
             <Text style={styles.subtitle}>Enter your credentials to continue</Text>
             
             <TextInput
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   altButton: {
     marginTop: 8,
-    borderColor: '#6200ee',
+    borderColor: '#0a7ea4',
   },
   buttonText: {
     fontSize: 16,
