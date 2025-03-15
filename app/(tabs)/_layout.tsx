@@ -59,7 +59,7 @@ export default function TabLayout() {
     <SafeAreaProvider>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: colorScheme === 'dark' ? '#4fb3d9' : '#0a7ea4',
+          tabBarActiveTintColor: colorScheme === 'dark' ? '#9D89BC' : '#5F4B8B',
           tabBarInactiveTintColor: colorScheme === 'dark' ? '#888' : '#999',
           headerShown: true,
           headerTitle: '',
@@ -80,7 +80,7 @@ export default function TabLayout() {
               <Ionicons 
                 name="person-circle-outline" 
                 size={24} 
-                color={colorScheme === 'dark' ? '#4fb3d9' : '#0a7ea4'} 
+                color={colorScheme === 'dark' ? '#9D89BC' : '#5F4B8B'} 
                 style={{ marginLeft: 16, marginRight: 8 }}
               />
               <Text style={{ 
@@ -96,7 +96,7 @@ export default function TabLayout() {
               <Ionicons 
                 name="notifications-outline" 
                 size={24} 
-                color={colorScheme === 'dark' ? '#4fb3d9' : '#0a7ea4'} 
+                color={colorScheme === 'dark' ? '#9D89BC' : '#5F4B8B'} 
                 style={{ marginRight: 16 }}
                 onPress={handleNotifications}
               />
@@ -107,7 +107,7 @@ export default function TabLayout() {
                 <Ionicons 
                   name="settings-outline" 
                   size={24} 
-                  color={colorScheme === 'dark' ? '#4fb3d9' : '#0a7ea4'} 
+                  color={colorScheme === 'dark' ? '#9D89BC' : '#5F4B8B'} 
                 />
               </Pressable>
             </View>

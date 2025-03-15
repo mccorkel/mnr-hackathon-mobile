@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert, SafeAreaView, 
 import { TextInput, Button, Text, Appbar } from 'react-native-paper';
 import { useFasten } from '../_layout';
 import { StatusBar } from 'expo-status-bar';
-import VitalSightLogo from '@/components/VitalSightLogo';
+import TigerCareLogo from '../../components/TigerCareLogo';
 import { useRouter } from 'expo-router';
 
 export default function DomainScreen() {
@@ -14,7 +14,7 @@ export default function DomainScreen() {
   const [debugInfo, setDebugInfo] = useState('');
   const router = useRouter();
 
-  const validateDomain = async (domainUrl) => {
+  const validateDomain = async (domainUrl: string): Promise<boolean> => {
     try {
       setDebugInfo(`Validating domain: ${domainUrl}`);
       
@@ -30,8 +30,9 @@ export default function DomainScreen() {
       
       // If we get any response, consider it valid
       return true;
-    } catch (error) {
-      setDebugInfo(prev => `${prev}\nValidation error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setDebugInfo(prev => `${prev}\nValidation error: ${errorMessage}`);
       return false;
     }
   };
@@ -69,10 +70,11 @@ export default function DomainScreen() {
         setError('Could not connect to this domain. Please check the URL and try again.');
         setDebugInfo(prev => `${prev}\nDomain validation failed`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error saving domain:', error);
-      setError(`Failed to save domain: ${error.message}`);
-      setDebugInfo(prev => `${prev}\nException: ${error.message}`);
+      setError(`Failed to save domain: ${errorMessage}`);
+      setDebugInfo(prev => `${prev}\nException: ${errorMessage}`);
       Alert.alert('Error', 'Failed to save domain. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -94,9 +96,10 @@ export default function DomainScreen() {
       setFastenDomain(formattedDomain);
       
       // Router will automatically redirect to login screen
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error forcing domain:', error);
-      setError(`Failed to force domain: ${error.message}`);
+      setError(`Failed to force domain: ${errorMessage}`);
       Alert.alert('Error', 'Failed to set domain. Please try again.');
     }
   };
@@ -111,21 +114,21 @@ export default function DomainScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           
           <View style={styles.logoContainer}>
-            <VitalSightLogo />
+            <TigerCareLogo />
           </View>
           
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Welcome to VitalSight</Text>
-            <Text style={styles.subtitle}>Enter your organization's VitalSight domain to continue</Text>
+            <Text style={styles.title}>Welcome to TigerCare</Text>
+            <Text style={styles.subtitle}>Enter your organization's TigerCare domain to continue</Text>
             
             <TextInput
-              label="VitalSight Domain URL"
+              label="TigerCare Domain URL"
               value={domain}
               onChangeText={text => {
                 setDomain(text);
                 setError('');
               }}
-              placeholder="yourdomain.vitalsight.com"
+              placeholder="0453-69-212-112-109.ngrok-free.app"
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"

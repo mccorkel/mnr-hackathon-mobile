@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TextStyle, ViewStyle } from 'react-native';
 import { Text, TextInput, Button, Card, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFasten } from '@/hooks/useFasten';
@@ -10,6 +10,37 @@ type Message = {
   id: string;
   text: string;
   isUser: boolean;
+};
+
+// Style types
+type Styles = {
+  mainContainer: ViewStyle;
+  container: ViewStyle;
+  headerContainer: ViewStyle;
+  infoText: TextStyle;
+  clearButton: ViewStyle;
+  clearButtonLabel: TextStyle;
+  chatContainer: ViewStyle;
+  chatContent: ViewStyle;
+  messageContainer: ViewStyle;
+  userMessageContainer: ViewStyle;
+  aiMessageContainer: ViewStyle;
+  aiMessage: ViewStyle;
+  userMessage: ViewStyle;
+  userMessageText: TextStyle;
+  aiMessageText: TextStyle;
+  keyboardAvoidingContainer: ViewStyle;
+  inputContainer: ViewStyle;
+  input: any; // Allow any style for TextInput
+  button: ViewStyle;
+  errorContainer: ViewStyle;
+  errorText: TextStyle;
+  domainContainer: ViewStyle;
+  domainCard: ViewStyle;
+  domainTitle: TextStyle;
+  domainSubtitle: TextStyle;
+  domainInput: any; // Allow any style for TextInput
+  domainButton: ViewStyle;
 };
 
 // Key for storing chat history in AsyncStorage
@@ -338,7 +369,9 @@ function ChatInterface() {
             ]}
           >
             <View style={message.isUser ? styles.userMessage : styles.aiMessage}>
-              <Text>{message.text}</Text>
+              <Text style={message.isUser ? styles.userMessageText : styles.aiMessageText}>
+                {message.text}
+              </Text>
             </View>
           </View>
         ))}
@@ -357,8 +390,7 @@ function ChatInterface() {
       >
         <View style={styles.inputContainer}>
           <TextInput
-            mode="outlined"
-            placeholder="Type your question..."
+            mode="flat"
             value={query}
             onChangeText={setQuery}
             style={styles.input}
@@ -372,6 +404,7 @@ function ChatInterface() {
             loading={isLoading}
             disabled={isLoading || !query.trim()}
             style={styles.button}
+            labelStyle={{ fontSize: 15, fontWeight: '600', color: '#fff' }}
             compact={true}
           >
             Ask
@@ -398,48 +431,55 @@ export default function AskAIScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<Styles>({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f8f8',
   },
   container: {
     flex: 1,
-    padding: 4,
-    paddingTop: 0,
+    padding: 8,
+    paddingTop: 4,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    marginBottom: 2,
-    borderRadius: 4,
+    backgroundColor: '#fff',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   infoText: {
     color: '#666',
-    fontSize: 12,
+    fontSize: 13,
     flex: 1,
+    lineHeight: 18,
   },
   clearButton: {
     marginLeft: 8,
   },
   clearButtonLabel: {
-    fontSize: 12,
-    color: '#0a7ea4',
+    fontSize: 13,
+    color: '#5F4B8B', // Theme purple
   },
   chatContainer: {
     flex: 1,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   chatContent: {
-    paddingVertical: 2,
+    paddingVertical: 8,
   },
   messageContainer: {
-    marginBottom: 6,
+    marginBottom: 12,
     flexDirection: 'row',
+    paddingHorizontal: 8,
   },
   userMessageContainer: {
     justifyContent: 'flex-end',
@@ -448,67 +488,124 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   aiMessage: {
-    backgroundColor: '#e1f5fe',
-    padding: 8,
-    borderRadius: 12,
+    backgroundColor: '#F0EBF7', // Light purple background
+    padding: 12,
+    borderRadius: 16,
     borderTopLeftRadius: 4,
     maxWidth: '85%',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   userMessage: {
-    backgroundColor: '#e8f5e9',
-    padding: 8,
-    borderRadius: 12,
+    backgroundColor: '#5F4B8B', // Theme purple
+    padding: 12,
+    borderRadius: 16,
     borderTopRightRadius: 4,
     maxWidth: '85%',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  userMessageText: {
+    color: '#fff', // White text for user messages
+  },
+  aiMessageText: {
+    color: '#2D2341', // Dark purple text for AI messages
   },
   keyboardAvoidingContainer: {
     width: '100%',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    backgroundColor: '#fff',
+    borderRadius: 12,
   },
   input: {
     flex: 1,
-    marginRight: 6,
-    maxHeight: 80,
+    marginRight: 4,
+    maxHeight: 150,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    fontSize: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 55,
   },
   button: {
     justifyContent: 'center',
+    alignItems: 'center',
     height: 40,
+    backgroundColor: '#5F4B8B',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    alignSelf: 'center',
+    minWidth: 60,
   },
   errorContainer: {
-    padding: 4,
-    marginBottom: 6,
+    padding: 8,
+    marginBottom: 8,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
+    marginHorizontal: 8,
   },
   errorText: {
-    color: 'red',
-    marginVertical: 2,
+    color: '#D32F2F',
+    fontSize: 13,
+    textAlign: 'center',
   },
-  // Domain input styles
   domainContainer: {
     flex: 1,
     padding: 16,
     justifyContent: 'center',
+    backgroundColor: '#f8f8f8',
   },
   domainCard: {
     marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   domainTitle: {
     marginBottom: 8,
     textAlign: 'center',
+    color: '#2D2341', // Dark purple
   },
   domainSubtitle: {
     marginBottom: 24,
     textAlign: 'center',
     color: '#666',
+    lineHeight: 20,
   },
   domainInput: {
     marginBottom: 16,
+    backgroundColor: '#fff',
   },
   domainButton: {
     marginTop: 16,
     paddingVertical: 8,
+    backgroundColor: '#5F4B8B', // Theme purple
   },
 }); 

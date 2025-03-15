@@ -5,6 +5,7 @@ import { Button, Text, List, Divider, Appbar, Switch, Avatar, Card, IconButton, 
 import { useFasten } from '@/hooks/useFasten';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 // Mock data for family members
 interface FamilyMember {
@@ -1257,6 +1258,52 @@ export default function SettingsScreen() {
     }
   };
 
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  // Load avatar when component mounts
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const savedAvatar = await AsyncStorage.getItem('userAvatar');
+        if (savedAvatar) {
+          setUserAvatar(savedAvatar);
+        }
+      } catch (error) {
+        console.error('Error loading avatar:', error);
+      }
+    };
+    loadAvatar();
+  }, []);
+
+  // Function to handle avatar selection
+  const handleAvatarPress = async (patientId: string) => {
+    // Request permissions first
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission Required', 'Please allow access to your photo library to change your avatar.');
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      const newAvatar = result.assets[0].uri;
+      setUserAvatar(newAvatar);
+      try {
+        await AsyncStorage.setItem('userAvatar', newAvatar);
+      } catch (error) {
+        console.error('Error saving avatar:', error);
+      }
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Appbar.Header>
@@ -1301,7 +1348,6 @@ export default function SettingsScreen() {
               </View>
             ) : (
               <View style={styles.patientsContainer}>
-                {/* Filter patients to only show those with no relationship or "THAT'S ME!" */}
                 {patients
                   .filter(patient => !patient.relationship || patient.relationship === 'THAT\'S ME!')
                   .map((patient, index, filteredArray) => (
@@ -1313,8 +1359,29 @@ export default function SettingsScreen() {
                           'No relationship set'
                         }
                         descriptionStyle={styles.patientIdText}
-                        left={props => <Avatar.Icon {...props} size={40} icon="account" />}
-                        onPress={() => patient.relationship !== 'THAT\'S ME!' && editPatientRelationship(patient.id)}
+                        left={props => 
+                          patient.relationship === 'THAT\'S ME!' ? (
+                            userAvatar ? (
+                              <Avatar.Image 
+                                {...props} 
+                                size={40} 
+                                source={{ uri: userAvatar }}
+                                style={styles.avatar}
+                              />
+                            ) : (
+                              <Avatar.Icon {...props} size={40} icon="account" />
+                            )
+                          ) : (
+                            <Avatar.Icon {...props} size={40} icon="account" />
+                          )
+                        }
+                        onPress={() => {
+                          if (patient.relationship === 'THAT\'S ME!') {
+                            handleAvatarPress(patient.id);
+                          } else {
+                            editPatientRelationship(patient.id);
+                          }
+                        }}
                         right={props => patient.relationship !== 'THAT\'S ME!' && (
                           <IconButton
                             {...props}
@@ -1345,26 +1412,42 @@ export default function SettingsScreen() {
                     title={member.name}
                     description={member.relation}
                     left={props => <Avatar.Icon {...props} icon="account" />}
-                    right={props => (
-                      <IconButton
-                        {...props}
-                        icon="dots-vertical"
-                        onPress={() => handleOpenSharingDialog(member)}
-                      />
-                    )}
                   />
-                  <View style={styles.chipContainer}>
-                    {member.sharedCategories.map(category => (
-                      <Chip key={category} style={styles.chip}>{category}</Chip>
-                    ))}
+                  <View style={styles.sharingButtonsContainer}>
+                    <Button
+                      mode="outlined"
+                      icon="eye"
+                      onPress={() => {
+                        Alert.alert(
+                          `Shared by ${member.name}`,
+                          member.sharedCategories.length > 0
+                            ? `${member.sharedCategories.map(category => {
+                                const categoryData = sharingCategories.find(c => c.name === category);
+                                return `• ${category} ${categoryData?.icon ? `(${categoryData.icon})` : ''}`;
+                              }).join('\n')}`
+                            : `${member.name} isn't sharing any information with you yet.`
+                        );
+                      }}
+                      style={styles.sharingButton}
+                    >
+                      View Shared
+                    </Button>
+                    <Button
+                      mode="outlined"
+                      icon="share"
+                      onPress={() => handleOpenSharingDialog(member)}
+                      style={styles.sharingButton}
+                    >
+                      Manage Sharing
+                    </Button>
                   </View>
-                  <Divider />
+                  <Divider style={styles.memberDivider} />
                 </View>
               ))
             )}
           </Card.Content>
         </Card>
-        
+
         {/* Privacy & Notifications Card */}
         <Card style={styles.card}>
           <Card.Title title="Privacy & Notifications" />
@@ -1527,7 +1610,7 @@ export default function SettingsScreen() {
         <Card style={styles.card}>
           <Card.Title title="About" />
           <Card.Content>
-            <Text variant="bodyLarge" style={styles.aboutTitle}>VitalSight App</Text>
+            <Text variant="bodyLarge" style={styles.aboutTitle}>TigerCare App</Text>
             <Text variant="bodyMedium" style={styles.aboutText}>
               Connect and manage your health data from multiple sources in one secure place.
             </Text>
@@ -1544,7 +1627,7 @@ export default function SettingsScreen() {
             />
             <List.Item
               title="Support"
-              description="help@vitalsight.com"
+              description="contact@tiger.care"
               left={props => <List.Icon {...props} icon="email" />}
             />
           </Card.Content>
@@ -1853,5 +1936,21 @@ const styles = StyleSheet.create({
   aboutText: {
     marginBottom: 16,
     lineHeight: 20,
+  },
+  avatar: {
+    backgroundColor: '#e0e0e0',
+  },
+  sharingButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  sharingButton: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  memberDivider: {
+    marginTop: 8,
   },
 }); 

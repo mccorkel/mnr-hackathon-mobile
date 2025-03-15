@@ -266,8 +266,12 @@ export default function RootLayout() {
     ...MD3LightTheme,
     colors: {
       ...MD3LightTheme.colors,
-      primary: '#0a7ea4',      // Teal blue (existing tint color)
-      secondary: '#00BFA5',    // Complementary teal
+      primary: '#FF7A5A',      // TigerCare coral
+      secondary: '#5F4B8B',    // TigerCare purple
+      error: '#FF7A5A',        // Use coral for errors
+      onPrimary: '#FFFFFF',    // White text on primary
+      primaryContainer: '#FFE4DE', // Light coral for containers
+      secondaryContainer: '#F0EBF7', // Light purple for containers
     },
   };
 
@@ -275,8 +279,12 @@ export default function RootLayout() {
     ...MD3DarkTheme,
     colors: {
       ...MD3DarkTheme.colors,
-      primary: '#4fb3d9',      // Lighter teal blue for dark mode
-      secondary: '#1DE9B6',    // Brighter teal for dark mode
+      primary: '#FF7A5A',      // Keep coral as primary
+      secondary: '#9D89BC',    // Lighter purple for dark mode
+      error: '#FF7A5A',        // Use coral for errors
+      onPrimary: '#FFFFFF',    // White text on primary
+      primaryContainer: '#4A1F10', // Dark coral for containers
+      secondaryContainer: '#2D2341', // Dark purple for containers
     },
   };
 

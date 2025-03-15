@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, ViewStyle } from 'react-native';
 import { Card, Text, Button, Divider, List, Chip, Avatar, IconButton } from 'react-native-paper';
 import { useFasten } from '@/hooks/useFasten';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Key for storing username in AsyncStorage - must match the one in _layout.tsx
 const USERNAME_STORAGE_KEY = 'fasten_username';
@@ -52,6 +53,29 @@ const mockImmunizations = [
   { name: 'Tetanus/Diphtheria (Td)', date: '2019-03-22', status: 'Due for booster' },
   { name: 'Pneumococcal', date: '2021-05-18', status: 'Current' },
 ];
+
+// Add ChipWithIcon interface with proper types
+interface ChipWithIconProps {
+  text: string;
+  style: ViewStyle;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+}
+
+// Update the helper function with types
+const ChipWithIcon = ({ text, style, icon, iconColor }: ChipWithIconProps) => (
+  <Chip 
+    mode="flat" 
+    style={[styles.baseChip, style]}
+    icon={() => (
+      <View style={styles.iconContainer}>
+        <Ionicons name={icon} size={14} color={iconColor} />
+      </View>
+    )}
+  >
+    <Text style={styles.chipText}>{text}</Text>
+  </Chip>
+);
 
 export default function DashboardScreen() {
   const { fastenDomain, authToken } = useFasten();
@@ -509,7 +533,7 @@ export default function DashboardScreen() {
           <Card style={styles.sectionCard}>
             <Card.Title 
               title="Health Vitals" 
-              left={(props) => <Avatar.Icon {...props} icon="heart-pulse" />}
+              left={(props) => <Avatar.Icon {...props} icon="heart-pulse" color="#fff" />}
               right={(props) => <IconButton {...props} icon="refresh" onPress={fetchVitalSigns} />}
             />
             <Card.Content>
@@ -560,7 +584,7 @@ export default function DashboardScreen() {
           <Card style={styles.sectionCard}>
             <Card.Title 
               title="Medical Conditions" 
-              left={(props) => <Avatar.Icon {...props} icon="medical-bag" />}
+              left={(props) => <Avatar.Icon {...props} icon="medical-bag" color="#fff" />}
             />
             <Card.Content>
               <Text variant="bodySmall" style={styles.sectionDescription}>
@@ -574,13 +598,12 @@ export default function DashboardScreen() {
                       title={condition.name}
                       description={`Since: ${condition.since}`}
                       right={() => (
-                        <Chip mode="outlined" style={
-                          condition.status === 'Active' 
-                            ? styles.activeChip 
-                            : styles.managedChip
-                        }>
-                          {condition.status}
-                        </Chip>
+                        <ChipWithIcon
+                          text={condition.status}
+                          style={condition.status === 'Active' ? styles.activeChip : styles.managedChip}
+                          icon={condition.status === 'Active' ? 'alert-circle' : 'checkmark-circle'}
+                          iconColor={condition.status === 'Active' ? '#ef5350' : '#66bb6a'}
+                        />
                       )}
                     />
                     {index < mockConditions.length - 1 && <Divider />}
@@ -596,7 +619,7 @@ export default function DashboardScreen() {
           <Card style={styles.sectionCard}>
             <Card.Title 
               title="Allergies" 
-              left={(props) => <Avatar.Icon {...props} icon="alert-circle" />}
+              left={(props) => <Avatar.Icon {...props} icon="alert-circle" color="#fff" />}
             />
             <Card.Content>
               <Text variant="bodySmall" style={styles.sectionDescription}>
@@ -610,15 +633,30 @@ export default function DashboardScreen() {
                       title={allergy.name}
                       description={`Reaction: ${allergy.reaction}`}
                       right={() => (
-                        <Chip mode="outlined" style={
-                          allergy.severity === 'High' 
-                            ? styles.highSeverityChip 
-                            : allergy.severity === 'Moderate'
-                              ? styles.moderateSeverityChip
-                              : styles.lowSeverityChip
-                        }>
-                          {allergy.severity}
-                        </Chip>
+                        <ChipWithIcon
+                          text={allergy.severity}
+                          style={
+                            allergy.severity === 'High'
+                              ? styles.highSeverityChip
+                              : allergy.severity === 'Moderate'
+                                ? styles.moderateSeverityChip
+                                : styles.lowSeverityChip
+                          }
+                          icon={
+                            allergy.severity === 'High'
+                              ? 'warning'
+                              : allergy.severity === 'Moderate'
+                                ? 'alert-circle'
+                                : 'information-circle'
+                          }
+                          iconColor={
+                            allergy.severity === 'High'
+                              ? '#ef5350'
+                              : allergy.severity === 'Moderate'
+                                ? '#ffa726'
+                                : '#66bb6a'
+                          }
+                        />
                       )}
                     />
                     {index < mockAllergies.length - 1 && <Divider />}
@@ -634,7 +672,7 @@ export default function DashboardScreen() {
           <Card style={styles.sectionCard}>
             <Card.Title 
               title="Medications" 
-              left={(props) => <Avatar.Icon {...props} icon="pill" />}
+              left={(props) => <Avatar.Icon {...props} icon="pill" color="#fff" />}
             />
             <Card.Content>
               <Text variant="bodySmall" style={styles.sectionDescription}>
@@ -664,7 +702,7 @@ export default function DashboardScreen() {
           <Card style={styles.sectionCard}>
             <Card.Title 
               title="Immunizations" 
-              left={(props) => <Avatar.Icon {...props} icon="needle" />}
+              left={(props) => <Avatar.Icon {...props} icon="needle" color="#fff" />}
             />
             <Card.Content>
               <Text variant="bodySmall" style={styles.sectionDescription}>
@@ -678,13 +716,12 @@ export default function DashboardScreen() {
                       title={immunization.name}
                       description={`Date: ${immunization.date}`}
                       right={() => (
-                        <Chip mode="outlined" style={
-                          immunization.status === 'Current' 
-                            ? styles.currentChip 
-                            : styles.dueChip
-                        }>
-                          {immunization.status}
-                        </Chip>
+                        <ChipWithIcon
+                          text={immunization.status}
+                          style={immunization.status === 'Current' ? styles.currentChip : styles.dueChip}
+                          icon={immunization.status === 'Current' ? 'checkmark-circle' : 'time'}
+                          iconColor={immunization.status === 'Current' ? '#66bb6a' : '#ffa726'}
+                        />
                       )}
                     />
                     {index < mockImmunizations.length - 1 && <Divider />}
@@ -740,30 +777,32 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   activeChip: {
-    backgroundColor: '#ffcdd2',
+    backgroundColor: 'rgba(239, 83, 80, 0.08)',
+    borderWidth: 0,
   },
   managedChip: {
-    backgroundColor: '#c8e6c9',
+    backgroundColor: 'rgba(102, 187, 106, 0.08)',
+    borderWidth: 0,
   },
   highSeverityChip: {
-    backgroundColor: '#ffebee',
-    borderColor: '#ef5350',
+    backgroundColor: 'rgba(239, 83, 80, 0.08)',
+    borderWidth: 0,
   },
   moderateSeverityChip: {
-    backgroundColor: '#fff8e1',
-    borderColor: '#ffc107',
+    backgroundColor: 'rgba(255, 167, 38, 0.08)',
+    borderWidth: 0,
   },
   lowSeverityChip: {
-    backgroundColor: '#e8f5e9',
-    borderColor: '#66bb6a',
+    backgroundColor: 'rgba(102, 187, 106, 0.08)',
+    borderWidth: 0,
   },
   currentChip: {
-    backgroundColor: '#e8f5e9',
-    borderColor: '#66bb6a',
+    backgroundColor: 'rgba(102, 187, 106, 0.08)',
+    borderWidth: 0,
   },
   dueChip: {
-    backgroundColor: '#fff8e1',
-    borderColor: '#ffc107',
+    backgroundColor: 'rgba(255, 167, 38, 0.08)',
+    borderWidth: 0,
   },
   medicationPurpose: {
     color: '#666',
@@ -805,5 +844,24 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginBottom: 8,
+  },
+  baseChip: {
+    borderRadius: 20,
+    height: 32,
+    marginVertical: 0,
+    justifyContent: 'center',
+    paddingVertical: 0,
+    paddingHorizontal: 8,
+    minWidth: 80,
+  },
+  iconContainer: {
+    marginLeft: -6,
+    marginRight: 2,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginRight: 0,
+    lineHeight: 16,
   },
 });
